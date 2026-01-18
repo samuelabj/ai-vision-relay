@@ -69,6 +69,11 @@ class DetectionProxy:
             valid_sn_predictions = []
             if sn_predictions:
                 for pred in sn_predictions:
+                    # Clean the label (take last part of semicolon string)
+                    raw_label = pred.get("label", "")
+                    clean_label = raw_label.split(";")[-1]
+                    pred["label"] = clean_label
+                    
                     # 1. Check Blank Label
                     if pred.get("label") == settings.SPECIESNET_BLANK_LABEL:
                         logger.debug("Ignoring SpeciesNet blank prediction.")
