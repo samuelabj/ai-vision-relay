@@ -49,13 +49,23 @@ class DetectionProxy:
             logger.info(f"SpeciesNet inference took {duration_sn:.2f}ms")
             
             logger.debug(f"SpeciesNet raw predictions: {sn_predictions}")
+            
+            # Filter blank predictions
+            valid_sn_predictions = []
             if sn_predictions:
-                logger.info(f"SpeciesNet found {len(sn_predictions)} predictions.")
+                for pred in sn_predictions:
+                    if pred.get("label") == settings.SPECIESNET_BLANK_LABEL:
+                        logger.debug("Ignoring SpeciesNet blank prediction.")
+                        continue
+                    valid_sn_predictions.append(pred)
+            
+            if valid_sn_predictions:
+                logger.info(f"SpeciesNet found {len(valid_sn_predictions)} predictions.")
                 # Strategy: Append specialized predictions. 
                 # Blue Iris will see all of them.
-                final_predictions.extend(sn_predictions)
+                final_predictions.extend(valid_sn_predictions)
             else:
-                logger.info("SpeciesNet found nothing.")
+                logger.info("SpeciesNet found nothing (or filtered all blank predictions).")
         
         return {
             "success": True, 
