@@ -19,7 +19,7 @@ $filesToCopy = @(
     "server.py",
     "requirements.txt",
     "README.md",
-    ".env",
+    "README.md",
     ".env.example"
 )
 
@@ -35,8 +35,10 @@ foreach ($item in $filesToCopy) {
     }
 }
 
-# Clean up unnecessary files from scripts (like pycache if present or old traces)
-Get-ChildItem -Path $tempDir -Include "__pycache__", "*.pyc" -Recurse | Remove-Item -Force
+# Clean up unnecessary files (pycache, pyc, etc.) to keep package small
+Write-Host "Cleaning up __pycache__ and *.pyc files..."
+Get-ChildItem -Path $tempDir -Include "__pycache__" -Recurse -Directory -Force | Remove-Item -Recurse -Force
+Get-ChildItem -Path $tempDir -Include "*.pyc", "*.pyo", "*.pyd" -Recurse -File -Force | Remove-Item -Force
 
 Write-Host "Zipping package to $zipFile..."
 Compress-Archive -Path "$tempDir\*" -DestinationPath $zipFile
