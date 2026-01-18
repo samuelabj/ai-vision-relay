@@ -6,51 +6,57 @@ if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
     exit 1
 }
 
-$ServiceName = "BlueIrisAiProxy"
-$PythonPathRaw = Resolve-Path (Join-Path $PSScriptRoot "..\.venv\Scripts\python.exe")
-$ScriptPathRaw = Resolve-Path (Join-Path $PSScriptRoot "..\server.py")
-$AppDirectoryRaw = Resolve-Path (Join-Path $PSScriptRoot "..")
+$SERVICE_NAME = "AiVisionRelay"
+$PYTHON_EXEC = Resolve-Path "$PSScriptRoot\..\.venv\Scripts\python.exe" | Select-Object -ExpandProperty Path
+$APP_PATH = Resolve-Path "$PSScriptRoot\..\server.py" | Select-Object -ExpandProperty Path
+$APP_DIR = Resolve-Path "$PSScriptRoot\.." | Select-Object -ExpandProperty Path
 
-$PythonPath = $PythonPathRaw.Path
-$ScriptPath = $ScriptPathRaw.Path
-$AppDirectory = $AppDirectoryRaw.Path
+Write-Host "Installing Service: $SERVICE_NAME"
+Write-Host "Python Executable: $PYTHON_EXEC"
+Write-Host "Application Path: $APP_PATH"
+Write-Host "Application Directory: $APP_DIR"
 
-Write-Host "Debug: PythonPath   = $PythonPath"
-Write-Host "Debug: ScriptPath   = $ScriptPath"
-Write-Host "Debug: AppDirectory = $AppDirectory"
-
-# Check for NSSM
-$NssmPath = Join-Path $PSScriptRoot "nssm.exe"
-if (-not (Test-Path $NssmPath)) {
-    # Fallback to checking PATH
-    if (Get-Command "nssm.exe" -ErrorAction SilentlyContinue) {
-        $NssmPath = "nssm.exe"
-    }
-    else {
-        Write-Error "NSSM.exe not found in scripts folder or PATH."
-        exit 1
-    }
+if (-not (Test-Path $PYTHON_EXEC)) {
+    Write-Error "Python executable not found. Please create the venv first."
+    exit 1
 }
 
-Write-Host "Installing $ServiceName Service..."
-# Pass paths directly without manual quote escaping. PowerShell and NSSM handle this.
-& $NssmPath install $ServiceName $PythonPath $ScriptPath
-& $NssmPath set $ServiceName AppDirectory $AppDirectory
-& $NssmPath set $ServiceName Description "SpeciesNet AI Proxy for Blue Iris"
-& $NssmPath set $ServiceName AppStdout ("$AppDirectory\service.log")
-& $NssmPath set $ServiceName AppStderr ("$AppDirectory\service.log")
-& $NssmPath set $ServiceName AppRotateFiles 1
-& $NssmPath set $ServiceName AppRotateOnline 1
-& $NssmPath set $ServiceName AppRotateSeconds 86400
-& $NssmPath set $ServiceName AppRotateBytes 5242880
+# Check for admin
+if (-not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+    Write-Warning "You must run this script as Administrator to install the service."
+    exit 1
+}
 
-Write-Host "Service installed successfully."
+# NSSM Install
+# Ensure nssm is in path or provide full path. Assuming nssm is available or in scripts folder.
+$NSSM = "$PSScriptRoot\nssm.exe"
+if (-not (Test-Path $NSSM)) {
+    # Fallback to system path nssm
+    $NSSM = "nssm"
+}
 
-# Verify Configuration
+# Stop if exists
+& $NSSM stop $SERVICE_NAME
+& $NSSM remove $SERVICE_NAME confirm
+
+# Install
+# Command: python.exe server.py
+# Use quotes around paths to handle spaces
+& $NSSM install $SERVICE_NAME "$PYTHON_EXEC" "$APP_PATH"
+& $NSSM set $SERVICE_NAME AppDirectory "$APP_DIR"
+& $NSSM set $SERVICE_NAME Description "AI Vision Relay - Smart Proxy for Blue Iris"
+& $NSSM set $SERVICE_NAME AppStdout "$APP_DIR\service.log"
+& $NSSM set $SERVICE_NAME AppStderr "$APP_DIR\service.log"
+& $NSSM set $SERVICE_NAME AppRotateFiles 1
+& $NSSM set $SERVICE_NAME AppRotateOnline 1
+& $NSSM set $SERVICE_NAME AppRotateSeconds 86400
+& $NSSM set $SERVICE_NAME AppRotateBytes 5242880
+
+Write-Host "Service installed. Starting..."
+& $NSSM start $SERVICE_NAME
+Write-Host "Done. Check service.log for output."
 Write-Host "--- Service Configuration ---"
-& $NssmPath get $ServiceName Application
-& $NssmPath get $ServiceName AppParameters
-& $NssmPath get $ServiceName AppDirectory
+& $NSSM get $SERVICE_NAME Application
+& $NSSM get $SERVICE_NAME AppParameters
+& $NSSM get $SERVICE_NAME AppDirectory
 Write-Host "-----------------------------"
-
-Write-Host "You can start it with: nssm start $ServiceName"

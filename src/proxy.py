@@ -60,6 +60,6 @@ class DetectionProxy:
         return {
             "success": True, 
             "predictions": final_predictions,
-            "message": "Processed by BlueIrisAiProxyServer",
+            "message": "Processed by AI-Vision-Relay",
             "count": len(final_predictions)
         }

@@ -17,7 +17,7 @@ if __name__ == "__main__":
         ]
     )
     logger = logging.getLogger("Server")
-    logger.info("Starting BlueIrisAiProxyServer Service...")
+    logger.info("Starting AI-Vision-Relay Service...")
     
     try:
         # log_config=None tells uvicorn to use the existing logging config (from basicConfig)

@@ -1,4 +1,4 @@
-# BlueIrisAiProxyServer
+# AI-Vision-Relay
 
 A **Smart AI Proxy** for Blue Iris that enhances object detection by combining **Blue Onyx** with **SpeciesNet**.
 
@@ -24,7 +24,7 @@ This service sits between Blue Iris and your existing AI server (Blue Onyx). It 
 
 ## Easiest Installation (Windows Service)
 
-1.  **Clone/Download** this repository to a permanent location (e.g., `C:\BlueIrisAiProxy`).
+1.  **Clone/Download** this repository to a permanent location (e.g., `C:\AiVisionRelay`).
 2.  **Install Dependencies**:
     Open a terminal in the project folder:
     ```powershell
@@ -57,7 +57,7 @@ This service sits between Blue Iris and your existing AI server (Blue Onyx). It 
     ```
 5.  **Start Service**:
     ```powershell
-    nssm start BlueIrisAiProxy
+    nssm start AiVisionRelay
     ```
 
 ## Blue Iris Configuration
@@ -71,8 +71,8 @@ This service sits between Blue Iris and your existing AI server (Blue Onyx). It 
 ## Troubleshooting & Logs
 
 *   **Logs**: Check `service.log` in the project directory for detailed activity, errors, and detection results.
-*   **Service Status**: Use `nssm status BlueIrisAiProxy` to check if it's running.
-*   **Manual Run**: You can stop the service (`nssm stop BlueIrisAiProxy`) and run manually for debugging:
+*   **Service Status**: Use `nssm status AiVisionRelay` to check if it's running.
+*   **Manual Run**: You can stop the service (`nssm stop AiVisionRelay`) and run manually for debugging:
     ```powershell
     .\.venv\Scripts\python.exe server.py
     ```
