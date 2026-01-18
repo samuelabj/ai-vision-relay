@@ -98,15 +98,19 @@ async def main():
     # Always silence matplotlib
     logging.getLogger("matplotlib").setLevel(logging.WARNING)
 
-    # Conditionally silence Uvicorn access logs
+    # Conditionally silence Uvicorn access logs and httpx
     if settings.LOG_LEVEL == "DEBUG":
         # Allow access logs in debug mode
         logging.getLogger("uvicorn.access").setLevel(logging.INFO)
         logging.getLogger("uvicorn.error").setLevel(logging.INFO)
+        logging.getLogger("httpx").setLevel(logging.INFO)
+        logging.getLogger("httpcore").setLevel(logging.INFO)
     else:
         # Hide access logs in normal operation (INFO/WARNING)
         logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
         logging.getLogger("uvicorn.error").setLevel(logging.WARNING)
+        logging.getLogger("httpx").setLevel(logging.WARNING)
+        logging.getLogger("httpcore").setLevel(logging.WARNING)
 
     logger.info("Starting AI-Vision-Relay Service...")
     
