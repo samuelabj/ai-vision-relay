@@ -13,6 +13,7 @@ env/
 
 # Logs
 *.log
+*.log.*
 logs/
 
 # IDE
