@@ -115,8 +115,26 @@ async def main():
     threading.excepthook = handle_thread_exception
     
     try:
-        # log_config=None tells uvicorn to use the existing logging config (from basicConfig)
-        config = uvicorn.Config("src.main:app", host=settings.HOST, port=settings.PORT, log_level=settings.LOG_LEVEL.lower(), reload=False, log_config=None)
+        # Prepare Robust Logging Configuration for Uvicorn
+        # We must copy and modify the default config because uvicorn.Config( log_config=None ) 
+        # causes Uvicorn to reset everything to defaults (INFO level).
+        import copy
+        from uvicorn.config import LOGGING_CONFIG
+        
+        custom_config = copy.deepcopy(LOGGING_CONFIG)
+        
+        # Smart Silencing logic
+        if settings.LOG_LEVEL == "DEBUG":
+            # In DEBUG mode, we WANT to see access logs
+            custom_config["loggers"]["uvicorn.access"]["level"] = "INFO" 
+            custom_config["loggers"]["uvicorn.error"]["level"] = "INFO"
+        else:
+            # In INFO mode, we HIDE access logs (treat them as noise)
+            custom_config["loggers"]["uvicorn.access"]["level"] = "WARNING"
+            custom_config["loggers"]["uvicorn.error"]["level"] = "WARNING"
+
+        # Pass the customized config
+        config = uvicorn.Config("src.main:app", host=settings.HOST, port=settings.PORT, log_level=settings.LOG_LEVEL.lower(), reload=False, log_config=custom_config)
         server = uvicorn.Server(config)
         
         loop = asyncio.get_running_loop()
