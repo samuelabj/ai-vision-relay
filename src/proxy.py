@@ -3,6 +3,7 @@ from src.clients.blue_onyx import BlueOnyxClient
 from src.inference.speciesnet_wrapper import SpeciesNetWrapper
 import logging
 import time
+import asyncio
 
 logger = logging.getLogger(__name__)
 
@@ -10,6 +11,7 @@ class DetectionProxy:
     def __init__(self, blue_onyx_client: BlueOnyxClient, speciesnet: SpeciesNetWrapper):
         self.blue_onyx = blue_onyx_client
         self.speciesnet = speciesnet
+        self.processing_lock = asyncio.Lock()
 
     async def process_image(self, image_data: bytes):
         logger.debug(f"Processing image of size: {len(image_data)} bytes")
@@ -41,12 +43,17 @@ class DetectionProxy:
         
         # 2. Run SpeciesNet if triggered
         if should_run_speciesnet:
-            logger.info("Running SpeciesNet...")
-            start_time_sn = time.perf_counter()
-            sn_predictions = self.speciesnet.predict(image_data)
-            end_time_sn = time.perf_counter()
-            duration_sn = (end_time_sn - start_time_sn) * 1000
-            logger.info(f"SpeciesNet inference took {duration_sn:.2f}ms")
+            logger.info("Waiting for SpeciesNet lock...")
+            async with self.processing_lock:
+                logger.info("Acquired SpeciesNet lock. Running inference...")
+                start_time_sn = time.perf_counter()
+                
+                # Run the blocking prediction in a separate thread to keep the event loop responsive
+                sn_predictions = await asyncio.to_thread(self.speciesnet.predict, image_data)
+                
+                end_time_sn = time.perf_counter()
+                duration_sn = (end_time_sn - start_time_sn) * 1000
+                logger.info(f"SpeciesNet inference took {duration_sn:.2f}ms")
             
             logger.debug(f"SpeciesNet raw predictions: {sn_predictions}")
             
