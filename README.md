@@ -82,3 +82,34 @@ This service sits between Blue Iris and your existing AI server (Blue Onyx). It 
 *   **Logic**: The core logic is in `src/proxy.py` (`DetectionProxy`).
 *   **SpeciesNet**: The wrapper is in `src/inference/speciesnet_wrapper.py`.
 *   **Tests**: Run unit tests with `pytest` or `python scripts/test_proxy.py`.
+
+## Verification Results & Debugging Notes
+
+The following findings were documented during the initial deployment and debugging sessions:
+
+### 1. Service Startup & Initialization
+- **Status**: Passed.
+- **Fix**: Resolved `TypeError` by removing incorrect `geographic_info` argument during SpeciesNet initialization. Service now correctly starts and logs to `service.log`.
+
+### 2. SpeciesNet Geofencing (Wild Turkey)
+- **Observation**: "Wild Turkey" was returned as a prediction for Australia (`SPECIESNET_REGION=AUS`).
+- **Investigation**: Inspected the underlying SpeciesNet v4 model's geofence map (`geofence_release.20251208.json`).
+- **Result**: The model **explicitly allows** Wild Turkey (*Meleagris gallopavo*) in Australia (`"AUS": []`). The service is strictly following the model's rules; this is a data characteristic, not a code bug.
+
+### 3. Bounding Box Scaling
+- **Observation**: Coordinates returned were all 0s or small floats.
+- **Fix**: Implemented coordinate conversion in `SpeciesNetWrapper`.
+    - **Issue**: SpeciesNet returns normalized coordinates (0-1).
+    - **Resolution**: Scaled these normalized values by the image dimensions (using PIL) to produce absolute pixel coordinates (`x_min`, `y_min`, `x_max`, `y_max`) as required by Blue Iris.
+
+### 4. GPU Support
+- **Status**: Enabled.
+- **Dependencies**: Installed PyTorch with CUDA 11.8 support.
+- **Verification**: `scripts/check_gpu.py` confirmed `torch.cuda.is_available() == True` and detected the NVIDIA GPU.
+
+### 5. Performance Logging
+- **Feature**: Added timing logs to `service.log`.
+- **Metrics**: Logs now show:
+    - `Blue Onyx inference took X ms` (End-to-End)
+    - `SpeciesNet inference took Y ms` (End-to-End)
+    - `SpeciesNet internal model.predict took Z ms` (Pure Inference)
