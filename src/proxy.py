@@ -14,7 +14,14 @@ class DetectionProxy:
         self.processing_lock = asyncio.Lock()
 
     async def process_image(self, image_data: bytes):
+        start_time_total = time.perf_counter()
         logger.info(f"Received detection request for image of size: {len(image_data)} bytes")
+        # ... (rest of logic) ...
+
+        # ... (constructing summary msg) ...
+        # [Wait, I need to inject start_time at top of function first]
+        # I'll do this in two chunks using multi_replace_file_content for safety.
+
         logger.debug(f"Processing image of size: {len(image_data)} bytes")
         
         # 1. Send to Blue Onyx
@@ -104,6 +111,11 @@ class DetectionProxy:
              msg += f"{len(sn_labels)} {sn_labels}"
         else:
             msg += "Skipped (No Trigger)"
+        
+        # Calculate total duration
+        end_time_total = time.perf_counter()
+        duration_total = end_time_total - start_time_total
+        msg += f". Time: {duration_total:.2f}s"
         
         logger.info(msg)
         
