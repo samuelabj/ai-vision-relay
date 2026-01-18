@@ -52,7 +52,7 @@ async def main():
     file_handler = TimedRotatingFileHandler(
         "server.log", when="midnight", interval=1, backupCount=7, encoding="utf-8"
     )
-    file_handler.setLevel(logging.INFO)
+    file_handler.setLevel(settings.LOG_LEVEL)
     file_handler.setFormatter(formatter)
 
     # 3. Stream Handler (Captured by NSSM) - Captures WARNING+ and Service Lifecycle
