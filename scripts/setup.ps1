@@ -64,8 +64,10 @@ Write-Host "Enforcing PyTorch CUDA installation..." -ForegroundColor Cyan
 & $pipExec install torch torchvision --upgrade --force-reinstall --index-url https://download.pytorch.org/whl/cu118
 
 # 4. Verify GPU Availability
+# 4. Verify GPU Availability
 Write-Host "Verifying GPU availability..."
-& python -c "import torch; print(f'CUDA Available: {torch.cuda.is_available()}')"
+$pythonExec = Join-Path $venvPath "Scripts\python.exe"
+& $pythonExec -c "import torch; print(f'CUDA Available: {torch.cuda.is_available()}')"
 if ($LASTEXITCODE -ne 0) {
     Write-Warning "Failed to verify CUDA availability."
 }
