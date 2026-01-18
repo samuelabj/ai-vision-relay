@@ -52,6 +52,14 @@ class FlushingFileHandler(TimedRotatingFileHandler):
         super().emit(record)
         self.flush()
 
+    def flush(self):
+        super().flush()
+        if self.stream and hasattr(self.stream, "fileno"):
+            try:
+                os.fsync(self.stream.fileno())
+            except Exception:
+                pass
+
 async def main():
     # 1. Define Formatters
     formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
