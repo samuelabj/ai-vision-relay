@@ -87,6 +87,14 @@ class DetectionProxy:
                 # Strategy: Append specialized predictions. 
                 # Blue Iris will see all of them.
                 final_predictions.extend(valid_sn_predictions)
+                
+                # Also add ONE generic "animal" label if any SpeciesNet detection exists.
+                # Use the highest confidence score found.
+                if valid_sn_predictions:
+                    best_pred = max(valid_sn_predictions, key=lambda p: p.get("confidence", p.get("score", 0.0)))
+                    generic_pred = best_pred.copy()
+                    generic_pred["label"] = "animal"
+                    final_predictions.append(generic_pred)
             else:
                 logger.debug("SpeciesNet found nothing (or filtered all predictions).")
 
