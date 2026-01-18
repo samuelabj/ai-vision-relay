@@ -6,6 +6,7 @@ import os
 import uuid
 from typing import Dict, Any, List
 import logging
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -45,10 +46,13 @@ class SpeciesNetWrapper:
             logger.debug(f"Running SpeciesNet prediction on {temp_path} with country={self.region}")
             
             # The predict method returns a dict: {'predictions': [ {result_for_file_1}, ... ]}
+            start_t = time.perf_counter()
             result = self.model.predict(
                 filepaths=[temp_path],
                 country=self.region
             )
+            end_t = time.perf_counter()
+            logger.debug(f"SpeciesNet internal model.predict took {(end_t - start_t)*1000:.2f}ms")
 
             if not result or "predictions" not in result or not result["predictions"]:
                 return []
@@ -77,6 +81,8 @@ class SpeciesNetWrapper:
                 
                 # Use the first detection box if available, otherwise full image
                 # CodeProject EXPECTS a bounding box.
+                bbox = {"x_min": 0, "y_min": 0, "x_max": 0, "y_max": 0} # Default
+                
                 if detections:
                     logger.debug(f"SpeciesNet detections list: {detections}")
                     d = detections[0]
@@ -108,8 +114,6 @@ class SpeciesNetWrapper:
                                  }
                              except Exception as e:
                                  logger.error(f"Failed to calculate absolute bbox coordinates: {e}")
-                                 # Fallback to normalized or zeros? CodeProject usually wants absolute.
-                                 # Returning 0s is safer than random small floats.
                                  pass
 
                 mapped_predictions.append({
@@ -120,10 +124,6 @@ class SpeciesNetWrapper:
                     "y_max": bbox["y_max"], 
                     "x_max": bbox["x_max"]
                 })
-            
-            # If no classification but detections (e.g. "animal"), return those?
-            # SpeciesNet aims for species ID. If it fails to ID species but found animal, 
-            # might return "animal" in detections.
             
             return mapped_predictions
 

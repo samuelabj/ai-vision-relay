@@ -2,6 +2,7 @@ from src.config import settings
 from src.clients.blue_onyx import BlueOnyxClient
 from src.inference.speciesnet_wrapper import SpeciesNetWrapper
 import logging
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +15,11 @@ class DetectionProxy:
         logger.debug(f"Processing image of size: {len(image_data)} bytes")
         
         # 1. Send to Blue Onyx
+        start_time_bo = time.perf_counter()
         bo_response = await self.blue_onyx.detect(image_data)
+        end_time_bo = time.perf_counter()
+        duration_bo = (end_time_bo - start_time_bo) * 1000
+        logger.info(f"Blue Onyx inference took {duration_bo:.2f}ms")
         logger.debug(f"Blue Onyx raw response: {bo_response}")
         
         should_run_speciesnet = False
@@ -37,7 +42,12 @@ class DetectionProxy:
         # 2. Run SpeciesNet if triggered
         if should_run_speciesnet:
             logger.info("Running SpeciesNet...")
+            start_time_sn = time.perf_counter()
             sn_predictions = self.speciesnet.predict(image_data)
+            end_time_sn = time.perf_counter()
+            duration_sn = (end_time_sn - start_time_sn) * 1000
+            logger.info(f"SpeciesNet inference took {duration_sn:.2f}ms")
+            
             logger.debug(f"SpeciesNet raw predictions: {sn_predictions}")
             if sn_predictions:
                 logger.info(f"SpeciesNet found {len(sn_predictions)} predictions.")
