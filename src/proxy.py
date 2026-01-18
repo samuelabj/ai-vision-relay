@@ -75,12 +75,23 @@ class DetectionProxy:
                     valid_sn_predictions.append(pred)
             
             if valid_sn_predictions:
-                logger.info(f"SpeciesNet found {len(valid_sn_predictions)} predictions.")
+                logger.debug(f"SpeciesNet found {len(valid_sn_predictions)} predictions.")
                 # Strategy: Append specialized predictions. 
                 # Blue Iris will see all of them.
                 final_predictions.extend(valid_sn_predictions)
             else:
                 logger.debug("SpeciesNet found nothing (or filtered all predictions).")
+
+        # Consolidated Summary Log (INFO)
+        # This ensures every request produces one high-level INFO log
+        msg = f"Request processed. Blue Onyx: {len(bo_predictions)}, SpeciesNet: "
+        if should_run_speciesnet:
+             # Just show the count of VALID predictions added
+             msg += f"{len(valid_sn_predictions) if 'valid_sn_predictions' in locals() else 0}"
+        else:
+            msg += "Skipped (No Trigger)"
+        
+        logger.info(msg)
         
         return {
             "success": True, 
