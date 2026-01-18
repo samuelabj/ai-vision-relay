@@ -46,12 +46,19 @@ class ServiceFilter(logging.Filter):
         # Allow warnings/errors OR messages specifically from "Server" logger (startup/shutdown)
         return record.levelno >= logging.WARNING or record.name == "Server"
 
+# Custom Handler to force flushing (fix for delayed logs)
+class FlushingFileHandler(TimedRotatingFileHandler):
+    def emit(self, record):
+        super().emit(record)
+        self.flush()
+
 async def main():
     # 1. Define Formatters
     formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
     # 2. File Handler (Rotated by Python) - Captures EVERYTHING (INFO+)
-    file_handler = TimedRotatingFileHandler(
+    # Use FlushingFileHandler to ensure logs are written immediately
+    file_handler = FlushingFileHandler(
         "server.log", when="midnight", interval=1, backupCount=7, encoding="utf-8"
     )
     file_handler.setLevel(settings.LOG_LEVEL)
