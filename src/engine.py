@@ -75,7 +75,8 @@ class DetectionEngine:
                     pred["label"] = clean_label
                     
                     # 1. Check Blank Label
-                    if pred.get("label") == settings.SPECIESNET_BLANK_LABEL:
+                    # Check against the raw setting OR the cleaned "blank" string just in case
+                    if raw_label == settings.SPECIESNET_BLANK_LABEL or clean_label.lower() == "blank":
                         logger.debug("Ignoring SpeciesNet blank prediction.")
                         continue
                     
